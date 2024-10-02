@@ -1,7 +1,8 @@
 import pandas as pd
 from connect import connect_to_db
+from filter_flights import read_flights_data
 
-def read_data():  
+def read_data_planes():  
     try:
         # Récupération des données
         planes_data = pd.read_excel('data/planes.xlsx', engine='openpyxl')
@@ -62,7 +63,51 @@ def insert_data(data):
         if conn:
             conn.close()
 
+def read_lost_planes():
+    try:
+        # Récupérer les données des avions (planes)
+        lost_planes_data = read_data_planes()
+        
+        # Récupérer les données des vols (flights)
+        flights = read_flights_data()
+        
+        # S'assurer que les colonnes tailnum existent et sont comparables dans les deux DataFrames
+        if 'tailnum' in flights.columns and 'tailnum' in lost_planes_data.columns:
+            
+            # Trouver les avions dans flights qui ne sont pas dans planes
+            lost_planes = flights[~flights['tailnum'].isin(lost_planes_data['tailnum'])]
+
+            # Extraire la liste des 'tailnum' manquants
+            lost_planes_list = lost_planes['tailnum'].unique().tolist()  # Utilisation de .unique() pour éviter les doublons
+            
+            print(f"Les tailnum manquants : {lost_planes}")
+            return lost_planes_list
+                
+        else:
+            print("La colonne 'tailnum' est manquante dans l'un des DataFrames.")
+            return []
+
+    except Exception as e:
+        print(f"Une erreur s'est produite : {e}")
+        return []
+
+def insertLostPLane(data):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+
+        #ajouter dans la table planes les avions manquants
+        for tailnum in data:
+            cursor.execute("INSERT INTO planes (tailnum) VALUES (%s)", (tailnum,))
+        conn.commit()
+        print(f"{len(data)} lignes insérées avec succès dans la table 'planes'.")
+    except Exception as e:
+        print(f"Une erreur s'est produite : {e}")
+
 if __name__ == '__main__':
-    data = read_data()
-    if data is not None and not data.empty:
-        insert_data(data)
+    data = read_lost_planes()
+    if data:
+        insertLostPLane(data)
+    else:
+        print("Aucun avion manquant à ajouter dans la base de données.")
+    
