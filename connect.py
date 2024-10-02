@@ -6,7 +6,7 @@ def connect_to_db():
         db_params = {
             'host': '52.47.102.168',
             'port': '6000',
-            'dbname': 'airport',
+            'dbname': 'aeroport',
             'user': 'postgres',
             'password': '123'
         }
