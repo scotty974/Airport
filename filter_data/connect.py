@@ -24,4 +24,3 @@ def connect_to_db():
     except Exception as e:
         print(f"Une erreur s'est produite : {e}")
 
-connect_to_db()

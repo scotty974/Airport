@@ -18,6 +18,16 @@ def insert_data(data):
     try:
         conn = connect_to_db()
         cursor = conn.cursor()
+        # check if the table exists
+        cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'airlines')")
+        table_exists = cursor.fetchone()[0]
+
+        if table_exists:
+            print("The table 'airlines' already exists in the database.")
+        else:
+            print("The table 'airlines' does not exist in the database.")
+            cursor.execute("CREATE TABLE airlines (carrier VARCHAR PRIMARY KEY, name VARCHAR)")
+        
         for index, row in data.iterrows():
             cursor.execute("INSERT INTO airlines VALUES (%s, %s)", (row['carrier'], row['name']))
         conn.commit()
