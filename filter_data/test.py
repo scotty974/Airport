@@ -1,5 +1,5 @@
 import pandas as pd
-from connect import connect_to_db
+from db.connect import connect_to_db
 # Connect to the database
 conn = connect_to_db()
 cur = conn.cursor()

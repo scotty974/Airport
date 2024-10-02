@@ -1,5 +1,5 @@
 import pandas as pd
-from connect import connect_to_db
+from db.connect import connect_to_db
 
 def read_flights_data():
     try:

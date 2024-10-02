@@ -1,5 +1,5 @@
 import pandas as pd
-from connect import connect_to_db
+from db.connect import connect_to_db
 from filter_flights import read_flights_data
 
 def read_data_planes():  
