@@ -4,31 +4,31 @@ from db.connect import connect_to_db
 def read_flights_data():
     try:
         # Récupération des données
-        flights_data = pd.read_excel('data/flights.xlsx', engine='openpyxl')  # Ajuste le chemin selon tes besoins
-        flights_split = flights_data['year,month,day,dep_time,sched_dep_time,dep_delay,arr_time,sched_arr_time,arr_delay,carrier,flight,tailnum,origin,dest,air_time,distance,hour,minute,time_hour'].str.split(',', expand=True)
-        flights_split.columns = [
-            'year',
-            'month',
-            'day',
-            'dep_time',
-            'sched_dep_time',
-            'dep_delay',
-            'arr_time',
-            'sched_arr_time',
-            'arr_delay',
-            'carrier',
-            'flight',
-            'tailnum',
-            'origin',
-            'dest',
-            'air_time',
-            'distance',
-            'hour',
-            'minute',
-            'time_hour'
-        ]
-        print(flights_split.head())
-        return flights_split
+        flights_data = pd.read_csv('data/flights.csv')  # Ajuste le chemin selon tes besoins
+        # flights_split = flights_data['year,month,day,dep_time,sched_dep_time,dep_delay,arr_time,sched_arr_time,arr_delay,carrier,flight,tailnum,origin,dest,air_time,distance,hour,minute,time_hour'].str.split(',', expand=True)
+        # flights_split.columns = [
+        #     'year',
+        #     'month',
+        #     'day',
+        #     'dep_time',
+        #     'sched_dep_time',
+        #     'dep_delay',
+        #     'arr_time',
+        #     'sched_arr_time',
+        #     'arr_delay',
+        #     'carrier',
+        #     'flight',
+        #     'tailnum',
+        #     'origin',
+        #     'dest',
+        #     'air_time',
+        #     'distance',
+        #     'hour',
+        #     'minute',
+        #     'time_hour'
+        # ]
+        print(flights_data.head())
+        return flights_data
     except Exception as e:
         print(f"Une erreur s'est produite lors de la lecture des données de vol : {e}")
 
