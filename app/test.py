@@ -4,9 +4,9 @@ import pandas as pd
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-
+from sankeyflow import Sankey
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+import plotly.graph_objects as go
 from api.airports import get_airports
 from api.flight import get_flights
 from api.planes import get_planes
@@ -33,10 +33,6 @@ m = folium.Map(location=[airports_data['lat'].mean(), airports_data['lon'].mean(
 for index, row in airports_data.iterrows():
     folium.Marker([row['lat'], row['lon']], popup=row['name']).add_to(m)
 
-# Afficher la carte dans Streamlit
-st.title("Carte des aéroports")
-#st_folium(m)
-
 # Nombre total d'aéroports, de départ et de destination
 st.header("Nombre total d'aéroports, de départ et de destination")
 total_airports = len(airports_data['faa'].unique())
@@ -55,6 +51,11 @@ st.write(f"Aéroports sans heure d'été : {no_dst_airports}")
 st.header("Nombre de fuseaux horaires")
 timezones = len(airports_data['tzone'].unique())
 st.write(f"Nombre de fuseaux horaires : {timezones}")
+
+# Nombre de vols annulés
+st.header("Nombre de vols annulés")
+cancelled_flights = len(flights_data[(flights_data['air_time'].isnull()) & (flights_data['arr_time'].isnull())])
+st.write(f"Nombre de vols annulés : {cancelled_flights}")
 
 # Aéroport de départ le plus emprunté
 st.header("Aéroport de départ le plus emprunté")
@@ -77,7 +78,7 @@ st.bar_chart(top_10_planes)
 
 st.header("Les 10 avions qui ont le moins décollé")
 bottom_10_planes = flights_data['tailnum'].value_counts().tail(10)
-st.bar_chart(bottom_10_planes)
+st.dataframe(bottom_10_planes)
 
 # Nombre de destinations desservies par chaque compagnie
 st.header("Nombre de destinations desservies par chaque compagnie")
@@ -122,9 +123,50 @@ companies_all_destinations = flights_data.groupby('carrier')['dest'].nunique().l
 st.dataframe(companies_all_destinations)
 
 # Tableau des origines et des destinations pour l'ensemble des compagnies
-st.header("Tableau des origines et des destinations pour l'ensemble des compagnies")
+# Regroupement des données par compagnie, origine, destination
 origins_destinations_per_company = flights_data.groupby(['carrier', 'origin', 'dest']).size().unstack().fillna(0)
+
+# Affichage du tableau dans Streamlit
+st.header("Tableau des origines et des destinations pour l'ensemble des compagnies")
 st.dataframe(origins_destinations_per_company)
+
+# Préparation des données pour le diagramme de flux (Sankey)
+all_origins = flights_data['origin'].unique()
+all_destinations = flights_data['dest'].unique()
+
+# Combinaison de toutes les villes (origines et destinations)
+all_locations = list(set(all_origins) | set(all_destinations))
+
+# Création des indices pour les villes
+location_indices = {location: i for i, location in enumerate(all_locations)}
+
+# Création des flux pour le Sankey
+sources = [location_indices[origin] for origin in flights_data['origin']]
+targets = [location_indices[dest] for dest in flights_data['dest']]
+values = flights_data.groupby(['origin', 'dest']).size().tolist()
+
+# Création du diagramme Sankey
+fig = go.Figure(go.Sankey(
+    node=dict(
+        pad=15,
+        thickness=20,
+        line=dict(color="black", width=0.5),
+        label=all_locations,  # Utilisation de toutes les villes (origines et destinations)
+        color="blue"
+    ),
+    link=dict(
+        source=sources,  # Indices des villes d'origine
+        target=targets,  # Indices des villes de destination
+        value=values,    # Quantité de vols entre origine et destination
+        color="rgba(31, 119, 180, 0.8)"
+    )
+))
+
+# Configuration du layout
+fig.update_layout(title_text="Diagramme de flux des vols entre les villes par compagnie", font_size=10)
+
+# Affichage du diagramme dans Streamlit
+st.plotly_chart(fig)
 
 # Destinations exclusives à certaines compagnies
 st.header("Destinations exclusives à certaines compagnies")
@@ -135,3 +177,7 @@ st.dataframe(exclusive_destinations)
 st.header("Vols exploités par United, American ou Delta")
 filtered_flights = flights_data[flights_data['carrier'].isin(['UA', 'AA', 'DL'])]
 st.dataframe(filtered_flights)
+
+# Afficher la carte dans Streamlit
+st.title("Carte des aéroports")
+st_folium(m)
